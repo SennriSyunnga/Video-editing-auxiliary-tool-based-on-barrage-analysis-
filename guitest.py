@@ -1,26 +1,33 @@
 #!/usr/bin/env python
-import sys
-from PySide2.QtWidgets import QMainWindow,QApplication
-from sideui import Ui_MainWindow
-from subprocess import Popen,PIPE,STDOUT
+# 程序的GUI界面功能实现代码，也是主程序，实现了界面定义和功能的分离
+# PySide2为第三方库，需要自行通过pip3下载，这里推荐镜像站如
+# pip3 install Pyside2-tools -i http://pypi.douban.com/simple/ --trusted-host pypi.douban.com
 
-class MyUi(QMainWindow,Ui_MainWindow):
+import sys
+from PySide2.QtWidgets import QMainWindow, QApplication #
+from sideui import Ui_MainWindow
+from subprocess import Popen, PIPE, STDOUT
+
+
+class MyUi(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.show()
         self.setup()
+    
     def setup(self):
         self.group = ''
         return 0
-        
+    
     def checkBox_On(self):
         if self.checkBox.isChecked():
             self.lineEdit_4.setText('1')
             self.lineEdit_5.setText('1')
             self.group = '1'
-        else :self.group = ''
-        
+        else:
+            self.group = ''
+    
     def resetButton_Click(self):
         self.lineEdit_1.setText("danmu.xml")
         self.lineEdit_2.setText("")
@@ -31,18 +38,17 @@ class MyUi(QMainWindow,Ui_MainWindow):
         self.progressBar.setValue(0)
         self.checkBox.setChecked(False)
         self.group = ''
-
-
-    #实现pushButton_click()函数，textEdit是我们放上去的文本框的id
+    
+    # 实现pushButton_click()函数，textEdit是我们放上去的文本框的id
     def pushButton_Click(self):
         self.textEdit.clear()
-        self.inputfile=self.lineEdit_1.text()
-        self.outputfile=self.lineEdit_2.text()
-        self.keyword=self.lineEdit_3.text()
-        self.limit=self.lineEdit_4.text()
-        self.interval=self.lineEdit_5.text()
+        self.inputfile = self.lineEdit_1.text()
+        self.outputfile = self.lineEdit_2.text()
+        self.keyword = self.lineEdit_3.text()
+        self.limit = self.lineEdit_4.text()
+        self.interval = self.lineEdit_5.text()
         cmd = r'.\read_kksk_from_text.exe'
-        #cmd='python read_kksk_from_text.py'
+        # cmd='python read_kksk_from_text.py'
         if self.outputfile:
             cmd = cmd + ' -o ' + self.outputfile
         if self.inputfile:
@@ -56,22 +62,23 @@ class MyUi(QMainWindow,Ui_MainWindow):
         if self.group:
             cmd = cmd + ' -g ' + self.group
         cmd += ' -f 1'
-        #logger.warning(cmd)
-        #cmd.replace("\\","\\").replace('\t','\\t')#这句并没有执行，但是需不需要执行呢？
-        #p = Popen(cmd,stdout=PIPE,stdin=PIPE,stderr=STDOUT)
-        s=Popen(cmd,bufsize=0,stdout=PIPE,stdin=PIPE,stderr=STDOUT,universal_newlines=True)
+        # logger.warning(cmd)
+        # cmd.replace("\\","\\").replace('\t','\\t')#这句并没有执行，但是需不需要执行呢？
+        # p = Popen(cmd,stdout=PIPE,stdin=PIPE,stderr=STDOUT)
+        s = Popen(cmd, bufsize=0, stdout=PIPE, stdin=PIPE, stderr=STDOUT, universal_newlines=True)
         self.progressBar.setMaximum(int(s.stdout.readline()))
         while True:
-            nextline=s.stdout.readline().strip()
+            nextline = s.stdout.readline().strip()
             if nextline == '':
                 break
             self.progressBar.setValue(int(nextline))
-            nextline=s.stdout.readline()
+            nextline = s.stdout.readline()
             self.textEdit.append(nextline.strip())
-            QApplication.processEvents()    
-        self.progressBar.setValue(self.progressBar.maximum())#结束时将进度条置为满状态
+            QApplication.processEvents()
+        self.progressBar.setValue(self.progressBar.maximum())  # 结束时将进度条置为满状态
         self.textEdit.append('Done.')
         return None
+
 
 if __name__ == '__main__':
     '''import logging
