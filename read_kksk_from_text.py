@@ -3,30 +3,17 @@
 # 任务，在python中重构读取弹幕的代码。
 # 主函数，支持被代码guitest.py作为次级进程打开，独立运行时如果不想使用默认设置，请以命令行形式添加输入参数
 # import json
-import os
 import math
 import re
 from optparse import OptionParser
 import requests  # 第三方库，通过pip安装
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
-import matplotlib.pyplot as plt  # 第三方库，通过pip安装
-from matplotlib.ticker import FuncFormatter, StrMethodFormatter  # 第三方库，通过pip安装
-from datetime import timedelta
 
 BILIBILI_API = "https://api.bilibili.com/x"
 BILIBILI_API_PAGELIST_AVID = f"{BILIBILI_API}/player/pagelist?aid="
 BILIBILI_API_PAGELIST_BVID = f"{BILIBILI_API}/player/pagelist?bvid="
 BILIBILI_API_DANMU_LIST = f"{BILIBILI_API}/v1/dm/list.so?oid="
-
-plt.rcParams["font.sans-serif"] = ["SimHei"]  # 使用支持显示中文及日文字符的字体
-
-
-def timeformatter(y, pos):  # 格式化柱形图时间
-    return str(timedelta(seconds=math.floor(y))) if y >= 0 else "无效时间"
-
-
-formatter = FuncFormatter(timeformatter)
 
 
 def get_args():
@@ -250,24 +237,6 @@ def process_local_xml(counts):
     return max_time_scale
 
 
-def plot(last, counts):
-    fig, ax = plt.subplots()
-    ax.set_xlabel("时间")
-    ax.set_ylabel("个数")
-    ax.set_xlim(left=0, right=last)  # 可选，设置时间轴范围从00:00:00到最后一条弹幕时间
-    ax.set_ylim(bottom=1, top=max(20, int(args.limit) * 2))  # 可选，设置图y轴坐标上下限
-    ax.xaxis.set_major_formatter(formatter)
-    ax.yaxis.set_major_formatter(StrMethodFormatter("{x:.0f}"))
-    plt.hist(  # 绘制柱形图
-        counts,  # 以时间频率为纵坐标
-        label=args.target,  # 以关键字为横坐标
-        bins=256,  # bins指定出现的柱形个数
-    )
-    plt.legend()
-    ax.set_title("关键弹幕次数统计")
-    plt.show()
-
-
 if __name__ == '__main__':
     args = get_args()  # 调用以获取文件信息
     counts = []  # 初始化数组, 该数组用于记录匹配弹幕出现的时间
@@ -297,8 +266,6 @@ if __name__ == '__main__':
     analyse_and_dump(frequency, args.out_file, int(args.limit), int(args.interval),
                      int(args.group), int(args.flag))
 
-    plot(max_time_scale, counts)
-
     # 如果要脱离gui使用，请取消注释下面的代码：
     # os.system('pause')
 
@@ -322,45 +289,3 @@ if __name__ == '__main__':
     python read_kksk_from_text.py -i BV19t411K7Kn,2 -o 2.txt -w KKsk -l 12 -d 1
     
 """
-
-# original_xml = getDanMu(args.xml_file)
-# if args.task_type:
-#     pretty_xml = xml.dom.minidom.parseString(original_xml.content).toprettyxml()
-#     try:
-#         with open(args.xml_file + '.xml', 'w', encoding='UTF-8') as f:
-#             for line in pretty_xml.splitlines():
-#                 f.write(line)
-#                 if line == '</i>':
-#                     break
-#                 else:
-#                     tempt = match_target_word(line, args.target)  # 寄存返回值
-#                     if tempt:
-#                         max_time_scale = max(max_time_scale, int(float(tempt)))
-#                         counts.append(tempt)
-#                 f.write('\n')
-#     except IOError:
-#         print('Error:cant read the xml file' + '\n一般这种情况下是你敲错了文件名')
-#         exit(1)
-# else:
-#     root = ET.fromstring(original_xml.content)
-#     for danmu in root.findall("d"):
-#         sec = math.floor(float(danmu.attrib["p"].split(",")[0]))  # 获取弹幕时间
-#         counts.append(sec)  # 该数组用于记录
-#         if sec > max_time_scale:
-#             max_time_scale = sec  # 记录最后一条弹幕时间
-
-# try:
-#     for line in open(args.xml_file, 'r', encoding='UTF-8'):
-#         if line == '</i>':
-#             break
-#         else:
-#             tempt = match_target_word(line, args.target)  # 寄存返回值
-#             if tempt:
-#                 max_time_scale = max(max_time_scale, int(float(tempt)))
-#                 counts.append(tempt)  # 该数组用于记录
-# except IndexError:
-#     print('Error:数组越界' + '\n一般这种情况下是我逻辑敲错了')
-#     exit(1)
-# except IOError:
-#     print('Error:cant read the xml file' + '\n一般这种情况下是你敲错了文件名')
-#     exit(1)
