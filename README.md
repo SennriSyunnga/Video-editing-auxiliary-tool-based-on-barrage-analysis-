@@ -1,5 +1,17 @@
 # Video-editing-auxiliary-tool-based-on-barrage-analysis-
 
+## 新特性
+
+**目前支持在文件名这个参数中直接使用bv或者av号，此时不要求本地提前准备xml文件。**
+
+**可以选择在处理在线视频的轴时是否顺便下载xml到本地**
+
+**通过滑动窗口优化了范围内弹幕统计速度。**
+
+植入最新最IN的bug，***我也不知道在哪。***
+
+## 原理
+
     原理是这样子的： 不妨假设观众的弹幕是大众趣味的正确反馈，那么在精彩时刻就会有大量特定弹幕， 
 
     那么，可以反向通过统计一段时间内特定弹幕的数量（或者浓度），来识别出一个长视频中受欢迎的部分。 
@@ -38,6 +50,7 @@
     
 ## 工具特性：
 
+0. 可以自己准备xml文件保存到本地进行读轴分析。如果视频在B站上，同时支持不提前下载xml文件，直接通过BV号获得读轴结果。
 1. 搜索对象不区分大小写，输入和输出文件名可以自己添加执行路径，如'D:\KaguraMea\video\1.xml'。若不加路径，则默认在同级文件夹内。文件后缀名可省略，将分别强制转.xml和.txt。
 2. 如不定义输出文件的名字，则输出和输入文件同名的txt文件。
 3. 根据弹幕池的浓度，可以自行调整limit的大小，越浓limit可以设得越高。如果没有得到搜索结果，请勾选仅作弹幕定位来确认弹幕池中是否有所选弹幕。若有，请降低limit，以达到满意的效果。
@@ -45,11 +58,12 @@
 ## 使用方法：
 
 ## 1. 使用GUI来运行该工具
+
 这个应该不需要介绍。
 
 一般地，如果有完整的相关库，请使用guitest.py打开用户图形界面。
 
-如果电脑没有pyside2相关库，guitest是无执行和编译的。因此建议直接下载guitest.exe这个文件。
+如果电脑没有pyside2相关库，guitest是无执行和编译的。因此建议直接从release里下载guitest.exe这个文件。
 
 下载链接参考：https://www.bilibili.com/read/cv6140515
 
@@ -63,7 +77,25 @@
 
 read_kksk_from_text.exe -i D:\Ccode\readthekkskfromtxt\readthekkskfromtxt\20190527_220250.xml -o 1.txt -w 草 -l 20
 
+或
+
+read_kksk_from_text.py -i D:\Ccode\readthekkskfromtxt\readthekkskfromtxt\20190527_220250.xml -o 1.txt -w 草 -l 20
+
 可选参数有:
+
+-i
+
+-o
+
+-w
+
+-l
+
+-v
+
+-g
+
+-d
 
     ```python
     parser.add_option('-i', '--input', dest='xml_file', default='danmu.xml', help='输入文件名，可包含后缀和指定路径')
@@ -73,10 +105,12 @@ read_kksk_from_text.exe -i D:\Ccode\readthekkskfromtxt\readthekkskfromtxt\201905
     parser.add_option('-v', '--interval', dest='interval', default = 20, help = '统计最小间隔')
     parser.add_option('-g', '--group', dest='group', default = 5, help = '从当前时间轴开始向前读group秒，若达到limit，则将结果记录，并跳过interval秒')
     parser.add_option('-f', '--flag', dest='flag', default = 0, help = '被gui调用时的标志，此时回传时间轴总长度scale和输出轴的秒制时间')
+    parser.add_option('-d', '--download', dest='task_type', default=0, help='如果是从已存在的B站视频中读入轴进行分析，是否顺带保存到本地')
     ```
-    其中，最后两项仅用于和Gui进行交互而使用，不去更改也没关系的。
+    
+其中，最后两项仅用于和Gui进行交互而使用，如果是直接用命令行执行可以不考虑使用这个参数
 	
-# 其他入口
+# 其他代码
 
 最后，感谢wpscott在项目中贡献了`完整弹幕测试.py`，
 
