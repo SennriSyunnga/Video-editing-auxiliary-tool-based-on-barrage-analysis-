@@ -4,9 +4,17 @@
 
 **目前支持在文件名这个参数中直接使用bv或者av号，此时不要求本地提前准备xml文件。**
 
+**支持在有分P的视频里选择性下载某个分P的xml和读取该分P的弹幕轴**：
+
+  例如输入文件名为：BV19t411K7Kn,2
+  
+  则会查看BV19t411K7Kn视频中的P2的弹幕轴
+
 **可以选择在处理在线视频的轴时是否顺便下载xml到本地**
 
 **通过滑动窗口优化了范围内弹幕统计速度。**
+
+**增加了wpscott写的可视化功能**
 
 植入最新最IN的bug，***我也不知道在哪。***
 
@@ -50,7 +58,7 @@
     
 ## 工具特性：
 
-0. 可以自己准备xml文件保存到本地进行读轴分析。如果视频在B站上，同时支持不提前下载xml文件，直接通过BV号获得读轴结果。
+0. 可以自己准备xml文件保存到本地进行读轴分析。如果视频在B站上，同时支持不提前下载xml文件，直接通过BV号获得读轴结果。如果一个视频有多个分P，则通过","指定分p，
 1. 搜索对象不区分大小写，输入和输出文件名可以自己添加执行路径，如'D:\KaguraMea\video\1.xml'。若不加路径，则默认在同级文件夹内。文件后缀名可省略，将分别强制转.xml和.txt。
 2. 如不定义输出文件的名字，则输出和输入文件同名的txt文件。
 3. 根据弹幕池的浓度，可以自行调整limit的大小，越浓limit可以设得越高。如果没有得到搜索结果，请勾选仅作弹幕定位来确认弹幕池中是否有所选弹幕。若有，请降低limit，以达到满意的效果。
@@ -71,7 +79,7 @@
 
 ## 2. 在终端（Terminal）中运行该工具
 
-如果不使用guitest这个界面，也可以直接用命令行
+如果不使用guitest这个界面，也可以直接用命令行执行程序。
 
 调用命令形如:
 
@@ -81,21 +89,9 @@ read_kksk_from_text.exe -i D:\Ccode\readthekkskfromtxt\readthekkskfromtxt\201905
 
 read_kksk_from_text.py -i D:\Ccode\readthekkskfromtxt\readthekkskfromtxt\20190527_220250.xml -o 1.txt -w 草 -l 20
 
-可选参数有:
+-o 1.txt -w 草 -l 20这部分是自定义参数，如果不指定则会使用默认值
 
--i
-
--o
-
--w
-
--l
-
--v
-
--g
-
--d
+可选参数有参考下面的代码，default表示默认值:
 
     ```python
     parser.add_option('-i', '--input', dest='xml_file', default='danmu.xml', help='输入文件名，可包含后缀和指定路径')
@@ -103,12 +99,12 @@ read_kksk_from_text.py -i D:\Ccode\readthekkskfromtxt\readthekkskfromtxt\2019052
     parser.add_option('-w', '--word', dest='target', default = 'kksk', help = '查询关键字')
     parser.add_option('-l', '--limit', dest='limit', default = 14, help = '纳入统计的最小阈值')
     parser.add_option('-v', '--interval', dest='interval', default = 20, help = '统计最小间隔')
-    parser.add_option('-g', '--group', dest='group', default = 5, help = '从当前时间轴开始向前读group秒，若达到limit，则将结果记录，并跳过interval秒')
+    parser.add_option('-g', '--group', dest='group', default = 5, help = '从当前时间轴开始向前读group秒，若达到规定阈值，则将结果记录，并跳过interval秒')
     parser.add_option('-f', '--flag', dest='flag', default = 0, help = '被gui调用时的标志，此时回传时间轴总长度scale和输出轴的秒制时间')
     parser.add_option('-d', '--download', dest='task_type', default=0, help='如果是从已存在的B站视频中读入轴进行分析，是否顺带保存到本地')
     ```
     
-其中，最后两项仅用于和Gui进行交互而使用，如果是直接用命令行执行可以不考虑使用这个参数
+其中，倒数第二项仅用于和Gui进行交互而使用，如果是直接用命令行执行可以不考虑使用这个参数
 	
 # 其他代码
 

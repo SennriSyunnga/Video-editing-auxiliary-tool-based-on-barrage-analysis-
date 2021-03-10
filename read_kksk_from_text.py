@@ -10,11 +10,23 @@ from optparse import OptionParser
 import requests  # 第三方库，通过pip安装
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
+import matplotlib.pyplot as plt  # 第三方库，通过pip安装
+from matplotlib.ticker import FuncFormatter, StrMethodFormatter  # 第三方库，通过pip安装
+from datetime import timedelta
 
 BILIBILI_API = "https://api.bilibili.com/x"
 BILIBILI_API_PAGELIST_AVID = f"{BILIBILI_API}/player/pagelist?aid="
 BILIBILI_API_PAGELIST_BVID = f"{BILIBILI_API}/player/pagelist?bvid="
 BILIBILI_API_DANMU_LIST = f"{BILIBILI_API}/v1/dm/list.so?oid="
+
+plt.rcParams["font.sans-serif"] = ["SimHei"]  # 使用支持显示中文及日文字符的字体
+
+
+def timeformatter(y, pos):  # 格式化柱形图时间
+    return str(timedelta(seconds=math.floor(y))) if y >= 0 else "无效时间"
+
+
+formatter = FuncFormatter(timeformatter)
 
 
 def get_args():
@@ -76,7 +88,7 @@ def sec2time(sec):
     return "%02d:%02d:%02d" % (h, m, s)
 
 
-def analyse(frequency, output_file, limit, interval=20, group=5, flag=0):
+def analyse_and_dump(frequency, output_file, limit, interval=20, group=5, flag=0):
     """
     对弹幕文件执行分析, 弹幕统计方法改为时间复杂度低的滑动窗口，sum(frequency[index:index+group-1])代码可能引起bug，需要留意
     :param frequency: 弹幕出现频度
@@ -97,8 +109,8 @@ def analyse(frequency, output_file, limit, interval=20, group=5, flag=0):
                 if count >= limit:
                     if flag:
                         print(index)
-                    print(sec2time(index), file=f)  # 写入文件
-                    print(sec2time(index))  # 输出到控制台，便于调试
+                    print(str(sec2time(index)) + ": " + str(count), file=f)  # 写入文件
+                    print(str(sec2time(index)) + ": " + str(count))  # 输出到控制台，便于调试
                     index += interval  # 若记录了一次，跳过一段时间再重新开始判定是否可以记录
                     if index > (len(frequency) - group + 1):
                         break
@@ -107,6 +119,11 @@ def analyse(frequency, output_file, limit, interval=20, group=5, flag=0):
                     count = sum(frequency[index:index + group - 1])
                 else:
                     count -= frequency[index]
+            print("描述信息： ", file=f)  # 写入文件
+            print("     阈值(limit)：" + str(args.limit), file=f)  # 写入文件
+            print("     关键词(word)：" + str(args.target), file=f)  # 写入文件
+            print("     冷却间隔(interval)：" + str(args.interval), file=f)  # 写入文件
+            print("     统计区间长度(interval)：" + str(args.group), file=f)  # 写入文件
     except IndexError:
         print('Error: analyse_function error, 数组越界' + '\n一般这种情况是我敲错了')
         exit(1)
@@ -117,10 +134,12 @@ def analyse(frequency, output_file, limit, interval=20, group=5, flag=0):
 
 def get_dan_mu(vid: str):
     """
-    获取弹幕xml, 后续集成
+    获取弹幕xml，支持读取特定分P的结果
     :param vid:
     :return:
     """
+    tmp = vid.split(',')
+    vid = tmp[0]
     if vid.startswith("BV"):
         resp = requests.get(f"{BILIBILI_API_PAGELIST_BVID}{vid}")
     elif vid.startswith("av"):
@@ -130,13 +149,21 @@ def get_dan_mu(vid: str):
     else:
         return None
     if resp.ok:
-        cid = resp.json()["data"][0]["cid"]
+        if len(tmp) == 1:
+            cid = resp.json()["data"][0]["cid"]
+        elif len(tmp) == 2:
+            page = int(tmp[1]) - 1
+            if page < 0:
+                raise ValueError("不合法的分页")
+            cid = resp.json()["data"][int(tmp[1]) - 1]["cid"]
+        else:
+            raise ValueError("不合法的逗号数量")
         return requests.get(f"{BILIBILI_API_DANMU_LIST}{cid}")
     else:
         return None
 
 
-def strQ2B(text):
+def strQ2B(text: str) -> str:
     """
     全角字符转换成半角字符
     :param text:
@@ -163,6 +190,9 @@ def process_online_video(vid, counts):
     max_time_scale: int = 0
     original_xml = get_dan_mu(vid)
     if args.task_type:
+        """
+        是否下载
+        """
         pretty_xml = xml.dom.minidom.parseString(original_xml.content).toprettyxml()
         try:
             with open(vid + '.xml', 'w', encoding='UTF-8') as f:
@@ -220,6 +250,24 @@ def process_local_xml(counts):
     return max_time_scale
 
 
+def plot(last, counts):
+    fig, ax = plt.subplots()
+    ax.set_xlabel("时间")
+    ax.set_ylabel("个数")
+    ax.set_xlim(left=0, right=last)  # 可选，设置时间轴范围从00:00:00到最后一条弹幕时间
+    ax.set_ylim(bottom=1, top=max(20, int(args.limit) * 2))  # 可选，设置图y轴坐标上下限
+    ax.xaxis.set_major_formatter(formatter)
+    ax.yaxis.set_major_formatter(StrMethodFormatter("{x:.0f}"))
+    plt.hist(  # 绘制柱形图
+        counts,  # 以时间频率为纵坐标
+        label=args.target,  # 以关键字为横坐标
+        bins=256,  # bins指定出现的柱形个数
+    )
+    plt.legend()
+    ax.set_title("关键弹幕次数统计")
+    plt.show()
+
+
 if __name__ == '__main__':
     args = get_args()  # 调用以获取文件信息
     counts = []  # 初始化数组, 该数组用于记录匹配弹幕出现的时间
@@ -246,19 +294,33 @@ if __name__ == '__main__':
 
     frequency = count_frequency(counts, max_time_scale)
 
-    analyse(frequency, args.out_file, int(args.limit), int(args.interval),
-            int(args.group), int(args.flag))
+    analyse_and_dump(frequency, args.out_file, int(args.limit), int(args.interval),
+                     int(args.group), int(args.flag))
+
+    plot(max_time_scale, counts)
 
     # 如果要脱离gui使用，请取消注释下面的代码：
     # os.system('pause')
 
-
 # 命令行使用示例
 """
     cd D:\python_code\ReadKkskFromText  # 改成切换到这个文件的真实路径 
+    
     python read_kksk_from_text.py -i D:\Ccode\readthekkskfromtxt\readthekkskfromtxt\20190527_220250.xml -o 1.txt -w 草 -l 20
+    
     python read_kksk_from_text.py -i D:\Ccode\readthekkskfromtxt\readthekkskfromtxt\20190527_220250.xml -o 2.txt -w kksk -l 14
+    
     python read_kksk_from_text.py -i D:\Ccode\readthekkskfromtxt\readthekkskfromtxt\20190527_220250.xml -o 2.txt -w KKsk -l 12
+    
+    如果要在线读取：
+    python read_kksk_from_text.py -i BV19t411K7Kn -o 2.txt -w KKsk -l 12
+    
+    如果要在线读取并下载xml文件到本地：
+    python read_kksk_from_text.py -i BV19t411K7Kn -o 2.txt -w KKsk -l 12 -d 1
+    
+    如果有分P：
+    python read_kksk_from_text.py -i BV19t411K7Kn,2 -o 2.txt -w KKsk -l 12 -d 1
+    
 """
 
 # original_xml = getDanMu(args.xml_file)

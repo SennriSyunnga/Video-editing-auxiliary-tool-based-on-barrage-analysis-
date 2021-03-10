@@ -62,7 +62,7 @@ matches = {
 }
 last = 0
 
-danmuxml = getDanmu("BV1kV411v7vc")
+danmuxml = getDanmu("BV19t411K7Kn")
 if danmuxml and danmuxml.ok:
     root = ET.fromstring(danmuxml.content)
     for danmu in root.findall("d"):
@@ -84,7 +84,7 @@ if danmuxml and danmuxml.ok:
     ax.set_xlabel("时间")
     ax.set_ylabel("个数")
     ax.set_xlim(left=0, right=last)  # 可选，设置时间轴范围从00:00:00到最后一条弹幕时间
-    ax.set_ylim(bottom=8, top=32)  # 可选，设置次数的上下限
+    ax.set_ylim(bottom=1, top=10)  # 可选，设置次数的上下限
     ax.xaxis.set_major_formatter(formatter)
     ax.yaxis.set_major_formatter(StrMethodFormatter("{x:.0f}"))
     plt.hist(  # 绘制柱形图
